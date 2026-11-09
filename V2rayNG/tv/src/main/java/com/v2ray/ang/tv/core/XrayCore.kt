@@ -98,15 +98,7 @@ object XrayCore {
     }
 
     /** The core controller, not a UI flag, is the authority for the running state. */
-    fun isRunning(): Boolean {
-        val instance = controller ?: return false
-        return runCatching {
-            val method = instance.javaClass.methods.firstOrNull {
-                it.name == "isRunning" && it.parameterTypes.isEmpty()
-            }
-            (method?.invoke(instance) as? Boolean) ?: false
-        }.getOrDefault(false)
-    }
+    fun isRunning(): Boolean = CoreStateReader.isRunning(controller)
 
     fun stop() {
         synchronized(lock) { stopLocked() }

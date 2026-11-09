@@ -16,6 +16,7 @@ import android.widget.Toast
 import com.v2ray.ang.tv.config.ProfileSnapshot
 import com.v2ray.ang.tv.config.ProfileStore
 import com.v2ray.ang.tv.util.UiScope
+import com.v2ray.ang.tv.vpn.ConnectTransition
 import com.v2ray.ang.tv.vpn.VpnContract
 
 /**
@@ -107,8 +108,15 @@ class MainActivity : Activity() {
     }
 
     private fun onState(state: String, message: String?) {
+        val previousState = currentState
         currentState = state
         render(message)
+        // A TV remote has no reason to stay on this screen once the tunnel is up: return to
+        // the launcher so the user can go straight back to watching. Only a fresh entry into
+        // STATE_CONNECTED triggers this; re-opening an already-connected app stays visible.
+        if (ConnectTransition.shouldMoveToBack(previousState, state)) {
+            moveTaskToBack(true)
+        }
     }
 
     private fun render(message: String? = VpnContract.publishedMessage) {

@@ -11,14 +11,17 @@ on:
         description: 'Direct URL to a self-built libv2ray.aar (overrides aar_tag)'
         required: false
         type: string
+      release_tag:
+        description: 'Also publish the APKs to a GitHub Release for this existing tag (empty = none)'
+        required: false
+        type: string
+  # GitHub combines tags and paths filters with AND, which would silently skip a tag
+  # push. Branch pushes stay unrestricted; the release step is gated on the ref instead.
   push:
     branches:
       - master
-    paths:
-      - 'V2rayNG/tv/**'
-      - 'V2rayNG/settings.gradle.kts'
-      - 'V2rayNG/gradle/libs.versions.toml'
-      - '.github/workflows/build-tv.yml'
+    tags:
+      - 'v*'
   pull_request:
     paths:
       - 'V2rayNG/tv/**'
@@ -26,8 +29,9 @@ on:
       - 'V2rayNG/gradle/libs.versions.toml'
       - '.github/workflows/build-tv.yml'
 
+# gh release create / upload needs write access; the build itself only reads.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -150,3 +154,27 @@ jobs:
         name: tv-universal
         path: V2rayNG/tv/build/outputs/apk/debug/*universal*.apk
         if-no-files-found: error
+
+    # Artifacts only live on the Actions run page and expire; a tag push also needs a
+    # GitHub Release so the APKs can be downloaded from the Releases page. A manual run
+    # with release_tag can backfill a release for a tag that is already pushed.
+    - name: Publish TV APKs to GitHub Releases
+      if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != '' }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+      run: |
+        apks=()
+        for suffix in armeabi-v7a arm64-v8a universal; do
+          apk=$(find V2rayNG/tv/build/outputs/apk/debug -name "*_${suffix}.apk" -print -quit)
+          if [ -z "$apk" ]; then
+            echo "Missing ${suffix} TV APK for release"
+            exit 1
+          fi
+          apks+=("$apk")
+        done
+        if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+          gh release upload "$RELEASE_TAG" "${apks[@]}" --clobber
+        else
+          gh release create "$RELEASE_TAG" "${apks[@]}" --title "$RELEASE_TAG" --generate-notes
+        fi

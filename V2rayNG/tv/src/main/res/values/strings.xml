@@ -13,7 +13,8 @@
     <string name="no_profiles">No profiles yet. Use Configurations to import by QR code.</string>
     <string name="config_title">Configurations</string>
     <string name="config_empty">No saved profiles</string>
-    <string name="action_import_qr">Import from phone (QR code)</string>
+    <string name="action_import_clipboard">Import from clipboard</string>
+    <string name="clipboard_empty">Clipboard is empty</string>
     <string name="action_delete">Delete selected</string>
     <string name="action_select_first">Select a profile first</string>
     <string name="action_back">Back</string>

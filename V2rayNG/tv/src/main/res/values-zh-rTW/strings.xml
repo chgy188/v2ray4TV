@@ -13,7 +13,8 @@
     <string name="no_profiles">尚無設定，請到「設定」頁面掃碼匯入</string>
     <string name="config_title">設定</string>
     <string name="config_empty">還沒有儲存的設定</string>
-    <string name="action_import_qr">手機掃碼匯入</string>
+    <string name="action_import_clipboard">從剪貼簿匯入</string>
+    <string name="clipboard_empty">剪貼簿為空</string>
     <string name="action_delete">刪除選取設定</string>
     <string name="action_select_first">請先選取一筆設定</string>
     <string name="action_back">返回</string>

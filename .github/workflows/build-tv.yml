@@ -53,9 +53,12 @@ jobs:
         java-version: '21'
 
     # libv2ray.aar is a generated, replaceable input (AndroidLibXrayLite /
-    # AndroidLibV2rayLite gomobile builds). For Android 5 (API 21/22) its libgojni.so must
-    # come from an NDK platform of android-21 or lower; if manifest merger rejects the AAR's
-    # minSdk or the core is outdated, pass a rebuilt AAR through the aar_url input.
+    # AndroidLibV2rayLite gomobile builds). Its manifest declares minSdk 24, so the TV
+    # manifest uses tools:overrideLibrary to keep minSdk 21; a rebuilt AAR with a different
+    # manifest package needs that override updated too. For Android 5 (API 21/22)
+    # libgojni.so must still come from an NDK platform of android-21 or lower, otherwise
+    # System.loadLibrary fails at runtime even though the APK builds. Pass such a rebuilt
+    # AAR through the aar_url input.
     - name: Fetch libv2ray.aar
       env:
         AAR_URL: ${{ inputs.aar_url || '' }}
@@ -79,6 +82,10 @@ jobs:
       run: |
         test -s V2rayNG/tv/libs/libv2ray.aar
         echo "AAR size: $(stat -c%s V2rayNG/tv/libs/libv2ray.aar) bytes"
+        echo "AAR manifest declares (minSdk / package):"
+        unzip -p V2rayNG/tv/libs/libv2ray.aar AndroidManifest.xml \
+          | grep -oE 'android:minSdkVersion="[0-9]+"|package="[^"]*"' \
+          || echo "(none)"
         unzip -l V2rayNG/tv/libs/libv2ray.aar | grep 'libgojni.so' || {
           echo "libv2ray.aar contains no libgojni.so; the TV APK could not connect"
           exit 1
@@ -99,6 +106,8 @@ jobs:
     # artifact. Without this check CI could publish APKs that cannot connect at all.
     - name: Verify native core is packaged
       run: |
+        aapt2=$(find "$ANDROID_HOME/build-tools" -name aapt2 -type f | sort | tail -n 1)
+        test -x "$aapt2" || { echo "aapt2 not found"; exit 1; }
         for suffix in armeabi-v7a arm64-v8a universal; do
           apk=$(find V2rayNG/tv/build/outputs/apk/debug -name "*_${suffix}.apk" -print -quit)
           if [ -z "$apk" ]; then
@@ -108,6 +117,10 @@ jobs:
           echo "== $(basename "$apk") =="
           unzip -l "$apk" | grep 'libgojni.so' || {
             echo "Missing libgojni.so in ${suffix} TV APK"
+            exit 1
+          }
+          "$aapt2" dump badging "$apk" | grep -E "(minSdkVersion|sdkVersion):'21'" > /dev/null || {
+            echo "Merged manifest no longer targets minSdk 21 in ${suffix} TV APK"
             exit 1
           }
         done

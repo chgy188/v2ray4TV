@@ -109,11 +109,11 @@
             android:textSize="18sp" />
 
         <Button
-            android:id="@+id/importButton"
+            android:id="@+id/clipboardButton"
             android:layout_width="360dp"
             android:layout_height="72dp"
             android:background="@drawable/focusable_background"
-            android:text="@string/action_import_qr"
+            android:text="@string/action_import_clipboard"
             android:textSize="20sp" />
     </LinearLayout>
 </LinearLayout>

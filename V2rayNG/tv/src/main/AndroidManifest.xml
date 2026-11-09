@@ -9,6 +9,15 @@
         android:smallScreens="true"
         android:xlargeScreens="true" />
 
+    <!-- Platform workaround: libv2ray.aar is built by AndroidLibXrayLite with minSdkVersion
+         24, while this APK must install on Android 5 (API 21/22). tools:overrideLibrary keeps
+         the merged manifest at 21 and prevents :tv:processDebugMainManifest from failing.
+         It does not make the AAR's native code compatible: libgojni.so must be built with an
+         NDK platform of android-21 or lower, or it fails to load on API 21/22. Removal
+         condition: a minSdk <= 21 AAR is supplied; then delete this element. A rebuilt AAR
+         with a different manifest package needs that package listed here instead. -->
+    <uses-sdk tools:overrideLibrary="go.libv2ray.gojni" />
+
     <!-- TV boxes have no camera and no touchscreen; both must stay optional. -->
     <uses-feature
         android:name="android.software.leanback"

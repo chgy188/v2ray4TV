@@ -14,8 +14,8 @@ android {
         // POST_NOTIFICATIONS (33) and foreground-service-type (34) boundaries avoids a
         // runtime permission prompt that a D-pad-only TV has no way to complete.
         targetSdk = 28
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         // Emit one APK per ABI. libgojni.so is large, so a combined v7a+v8a "compatible"
         // build would make every TV box download a native library it cannot use. Android 5

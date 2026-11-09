@@ -1,6 +1,8 @@
 package com.v2ray.ang.tv
 
 import android.app.Activity
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.View
@@ -25,8 +27,10 @@ import java.net.URL
 
 /**
  * The only screen that holds configuration content: the saved profile list, deletion, and
- * the QR-code pairing entry point. The TV shows a short-lived pairing URL; the phone opens
- * it in a browser and POSTs share links back over the LAN.
+ * the pairing endpoint that opens with the screen. The TV shows a short-lived pairing URL;
+ * the phone opens it in a browser and POSTs share links back over the LAN. The button under
+ * the QR code is a second import entry point for boxes that already hold the configuration
+ * in the system clipboard.
  */
 class ConfigActivity : Activity() {
     private val scope = UiScope()
@@ -35,7 +39,7 @@ class ConfigActivity : Activity() {
     private lateinit var emptyText: TextView
     private lateinit var qrImage: ImageView
     private lateinit var pairingText: TextView
-    private lateinit var importButton: Button
+    private lateinit var clipboardButton: Button
 
     private var pairing: PairingServer? = null
     private var snapshot = ProfileSnapshot()
@@ -49,20 +53,26 @@ class ConfigActivity : Activity() {
         emptyText = findViewById(R.id.emptyText)
         qrImage = findViewById(R.id.qrImage)
         pairingText = findViewById(R.id.pairingText)
-        importButton = findViewById(R.id.importButton)
+        clipboardButton = findViewById(R.id.clipboardButton)
 
-        importButton.setOnClickListener { startPairing() }
+        clipboardButton.setOnClickListener { importFromClipboard() }
         findViewById<Button>(R.id.deleteButton).setOnClickListener { deleteChecked() }
         findViewById<Button>(R.id.backButton).setOnClickListener { finish() }
         profileList.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
             checkedGuid = snapshot.profiles.getOrNull(position)?.guid
         }
-        importButton.requestFocus()
+        clipboardButton.requestFocus()
     }
 
     override fun onStart() {
         super.onStart()
         refresh()
+        startPairing()
+    }
+
+    override fun onStop() {
+        stopPairing()
+        super.onStop()
     }
 
     override fun onDestroy() {
@@ -129,24 +139,50 @@ class ConfigActivity : Activity() {
         pairing = null
     }
 
+    /** Imports the system clipboard without a keyboard; parsing and disk I/O stay off the main thread. */
+    private fun importFromClipboard() {
+        // ClipboardManager needs no permission: the app is foreground when the button is pressed.
+        val manager = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        val text = runCatching {
+            manager?.primaryClip
+                ?.takeIf { it.itemCount > 0 }
+                ?.getItemAt(0)
+                ?.text
+                ?.toString()
+        }.getOrNull()
+        if (text.isNullOrBlank()) {
+            Toast.makeText(this, R.string.clipboard_empty, Toast.LENGTH_SHORT).show()
+            return
+        }
+        scope.launch({ parseAndStore(text) }) { result ->
+            showImportResult(result.getOrDefault(0))
+        }
+    }
+
     /** Runs on the PairingServer thread; disk writes and parsing stay off the main thread. */
     private fun importFromPhone(text: String): PairingServer.ImportResult {
+        val count = runCatching { parseAndStore(text) }.getOrDefault(0)
+        runOnUiThread { showImportResult(count) }
+        return PairingServer.ImportResult(count > 0, count)
+    }
+
+    /** Shared by both import entry points; the caller owns the thread. */
+    private fun parseAndStore(text: String): Int {
         val content = if (isSubscriptionUrl(text)) {
             runCatching { downloadSubscription(text.trim()) }.getOrNull().orEmpty()
         } else {
             text
         }
-        val parsed = ShareLinkParser.parse(content)
-        val count = store.add(parsed.profiles)
-        runOnUiThread {
-            refresh()
-            pairingText.text = if (count > 0) {
-                getString(R.string.pairing_received, count)
-            } else {
-                getString(R.string.pairing_failed)
-            }
+        return store.add(ShareLinkParser.parse(content).profiles)
+    }
+
+    private fun showImportResult(count: Int) {
+        refresh()
+        pairingText.text = if (count > 0) {
+            getString(R.string.pairing_received, count)
+        } else {
+            getString(R.string.pairing_failed)
         }
-        return PairingServer.ImportResult(count > 0, count)
     }
 
     private fun isSubscriptionUrl(text: String): Boolean {

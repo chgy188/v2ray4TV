@@ -13,7 +13,8 @@
     <string name="no_profiles">暂无配置，请到「配置」页面扫码导入</string>
     <string name="config_title">配置</string>
     <string name="config_empty">还没有保存的配置</string>
-    <string name="action_import_qr">手机扫码导入</string>
+    <string name="action_import_clipboard">从剪贴板导入</string>
+    <string name="clipboard_empty">剪贴板为空</string>
     <string name="action_delete">删除选中配置</string>
     <string name="action_select_first">请先选择一条配置</string>
     <string name="action_back">返回</string>

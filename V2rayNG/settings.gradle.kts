@@ -22,3 +22,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "v2rayNG"
 include(":app")
+// Standalone leanback/tablet client. It has its own minSdk (21) and its own dependency
+// set, so it must not share the :app source set or its AndroidX/Compose/CameraX stack.
+include(":tv")

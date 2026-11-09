@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">v2rayNG TV</string>
+    <string name="status_disconnected">未連線</string>
+    <string name="status_connecting">正在連線…</string>
+    <string name="status_connected">已連線 · %1$s</string>
+    <string name="status_error">連線失敗：%1$s</string>
+    <string name="action_select_and_connect">選擇設定並連線</string>
+    <string name="action_disconnect">中斷連線</string>
+    <string name="action_config">設定</string>
+    <string name="action_cancel">取消</string>
+    <string name="dialog_select_profile">選擇設定（選取後立即連線）</string>
+    <string name="no_profiles">尚無設定，請到「設定」頁面掃碼匯入</string>
+    <string name="config_title">設定</string>
+    <string name="config_empty">還沒有儲存的設定</string>
+    <string name="action_import_qr">手機掃碼匯入</string>
+    <string name="action_delete">刪除選取設定</string>
+    <string name="action_select_first">請先選取一筆設定</string>
+    <string name="action_back">返回</string>
+    <string name="pairing_title">掃碼匯入設定</string>
+    <string name="pairing_waiting">等待手機傳送。請用手機掃描 QR Code，5 分鐘內有效。</string>
+    <string name="pairing_no_network">偵測不到區域網路位址，請先讓 TV 連接 Wi-Fi</string>
+    <string name="pairing_received">已匯入 %1$d 筆設定</string>
+    <string name="pairing_failed">匯入失敗，請檢查設定內容</string>
+    <string name="profile_unnamed">未命名設定</string>
+    <string name="acc_qr_code">配對 QR Code</string>
+    <string name="notification_channel">VPN 連線</string>
+    <string name="notification_title">v2rayNG TV 已連線</string>
+    <string name="notification_text">開啟應用程式可中斷連線</string>
+    <string name="error_core_missing">找不到 Xray 核心程式庫，請放置 libv2ray.aar</string>
+    <string name="error_core_generic">無法啟動 VPN</string>
+    <string name="error_no_selection">請先選取一筆設定</string>
+    <string name="error_vpn_permission">未授予 VPN 權限</string>
+    <string name="html_title">傳送設定到 TV</string>
+    <string name="html_note">貼上 vmess / vless / trojan / ss / socks 分享連結、base64 訂閱內容或訂閱網址，可一次貼上多行。</string>
+    <string name="html_placeholder">在此貼上設定…</string>
+    <string name="html_submit">傳送到 TV</string>
+    <string name="html_empty">請先貼上設定內容</string>
+    <string name="html_sending">正在傳送…</string>
+    <string name="html_success">成功匯入 {0} 筆設定</string>
+    <string name="html_failure">傳送失敗，請重試或確認手機與 TV 在同一個 Wi-Fi</string>
+</resources>

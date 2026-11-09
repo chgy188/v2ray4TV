@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keys are complete for this locale; wording still falls back to English pending review. -->
+<resources>
+    <string name="app_name">v2rayNG TV</string>
+    <string name="status_disconnected">Disconnected</string>
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_connected">Connected · %1$s</string>
+    <string name="status_error">Connection failed: %1$s</string>
+    <string name="action_select_and_connect">Select a profile to connect</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="action_config">Configurations</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="dialog_select_profile">Select a profile (connects immediately)</string>
+    <string name="no_profiles">No profiles yet. Use Configurations to import by QR code.</string>
+    <string name="config_title">Configurations</string>
+    <string name="config_empty">No saved profiles</string>
+    <string name="action_import_qr">Import from phone (QR code)</string>
+    <string name="action_delete">Delete selected</string>
+    <string name="action_select_first">Select a profile first</string>
+    <string name="action_back">Back</string>
+    <string name="pairing_title">Scan to import</string>
+    <string name="pairing_waiting">Waiting for the phone. Scan the QR code with its camera; valid for 5 minutes.</string>
+    <string name="pairing_no_network">No LAN address found. Connect the TV to Wi-Fi first.</string>
+    <string name="pairing_received">Imported %1$d profiles</string>
+    <string name="pairing_failed">Import failed. Check the configuration text.</string>
+    <string name="profile_unnamed">Unnamed profile</string>
+    <string name="acc_qr_code">Pairing QR code</string>
+    <string name="notification_channel">VPN connection</string>
+    <string name="notification_title">v2rayNG TV connected</string>
+    <string name="notification_text">Open the app to disconnect</string>
+    <string name="error_core_missing">Xray core not found. Place libv2ray.aar in the TV build.</string>
+    <string name="error_core_generic">Unable to start the VPN</string>
+    <string name="error_no_selection">Select a profile first</string>
+    <string name="error_vpn_permission">VPN permission was not granted</string>
+    <string name="html_title">Send configurations to TV</string>
+    <string name="html_note">Paste vmess / vless / trojan / ss / socks share links, base64 subscription content, or a subscription URL. Multiple lines are supported.</string>
+    <string name="html_placeholder">Paste configurations here…</string>
+    <string name="html_submit">Send to TV</string>
+    <string name="html_empty">Paste something first</string>
+    <string name="html_sending">Sending…</string>
+    <string name="html_success">Imported {0} profiles</string>
+    <string name="html_failure">Send failed. Retry or check that the phone and TV share the same Wi-Fi.</string>
+</resources>

@@ -1,0 +1,139 @@
+name: Build TV APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      aar_tag:
+        description: 'AndroidLibXrayLite release tag for libv2ray.aar (empty = latest release)'
+        required: false
+        type: string
+      aar_url:
+        description: 'Direct URL to a self-built libv2ray.aar (overrides aar_tag)'
+        required: false
+        type: string
+  push:
+    branches:
+      - master
+    paths:
+      - 'V2rayNG/tv/**'
+      - 'V2rayNG/settings.gradle.kts'
+      - 'V2rayNG/gradle/libs.versions.toml'
+      - '.github/workflows/build-tv.yml'
+  pull_request:
+    paths:
+      - 'V2rayNG/tv/**'
+      - 'V2rayNG/settings.gradle.kts'
+      - 'V2rayNG/gradle/libs.versions.toml'
+      - '.github/workflows/build-tv.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # No submodules and no NDK: the TV client uses Xray's own tun inbound, so it needs
+    # neither hev-socks5-tunnel nor compile-hevtun.sh. The only native input is the AAR.
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v4
+      with:
+        log-accepted-android-sdk-licenses: false
+        cmdline-tools-version: '14742923'
+        packages: 'platforms;android-37.0 build-tools;37.0.0 platform-tools'
+
+    - name: Setup Java
+      uses: actions/setup-java@v6.1.0
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    # libv2ray.aar is a generated, replaceable input (AndroidLibXrayLite /
+    # AndroidLibV2rayLite gomobile builds). For Android 5 (API 21/22) its libgojni.so must
+    # come from an NDK platform of android-21 or lower; if manifest merger rejects the AAR's
+    # minSdk or the core is outdated, pass a rebuilt AAR through the aar_url input.
+    - name: Fetch libv2ray.aar
+      env:
+        AAR_URL: ${{ inputs.aar_url || '' }}
+        AAR_TAG: ${{ inputs.aar_tag || '' }}
+      run: |
+        mkdir -p V2rayNG/tv/libs
+        if [ -n "$AAR_URL" ]; then
+          echo "Using self-built AAR from aar_url"
+          curl -fL --retry 3 -o V2rayNG/tv/libs/libv2ray.aar "$AAR_URL"
+        elif [ -n "$AAR_TAG" ]; then
+          echo "Using AndroidLibXrayLite release tag $AAR_TAG"
+          curl -fL --retry 3 -o V2rayNG/tv/libs/libv2ray.aar \
+            "https://github.com/2dust/AndroidLibXrayLite/releases/download/$AAR_TAG/libv2ray.aar"
+        else
+          echo "Using latest AndroidLibXrayLite release"
+          curl -fL --retry 3 -o V2rayNG/tv/libs/libv2ray.aar \
+            "https://github.com/2dust/AndroidLibXrayLite/releases/latest/download/libv2ray.aar"
+        fi
+
+    - name: Verify AAR contains the native core
+      run: |
+        test -s V2rayNG/tv/libs/libv2ray.aar
+        echo "AAR size: $(stat -c%s V2rayNG/tv/libs/libv2ray.aar) bytes"
+        unzip -l V2rayNG/tv/libs/libv2ray.aar | grep 'libgojni.so' || {
+          echo "libv2ray.aar contains no libgojni.so; the TV APK could not connect"
+          exit 1
+        }
+
+    - name: Build TV APKs
+      run: |
+        cd V2rayNG
+        echo "sdk.dir=${ANDROID_HOME}" > local.properties
+        chmod 755 gradlew
+        ./gradlew :tv:testDebugUnitTest :tv:lintDebug :tv:assembleDebug --no-daemon --console=plain
+
+    - name: List APK outputs
+      run: ls -lh V2rayNG/tv/build/outputs/apk/debug/*.apk
+
+    # A missing AAR still produces APKs (the TV code resolves the core reflectively at
+    # runtime), so explicitly assert that the native core was packaged into every shipped
+    # artifact. Without this check CI could publish APKs that cannot connect at all.
+    - name: Verify native core is packaged
+      run: |
+        for suffix in armeabi-v7a arm64-v8a universal; do
+          apk=$(find V2rayNG/tv/build/outputs/apk/debug -name "*_${suffix}.apk" -print -quit)
+          if [ -z "$apk" ]; then
+            echo "Missing ${suffix} TV APK"
+            exit 1
+          fi
+          echo "== $(basename "$apk") =="
+          unzip -l "$apk" | grep 'libgojni.so' || {
+            echo "Missing libgojni.so in ${suffix} TV APK"
+            exit 1
+          }
+        done
+
+    # Per-ABI packages are the primary artifacts; universal is the fallback for x86 boxes
+    # and for devices whose ABI is unknown.
+    - name: Upload armeabi-v7a TV APK
+      uses: actions/upload-artifact@v7
+      if: ${{ success() }}
+      with:
+        name: tv-armeabi-v7a
+        path: V2rayNG/tv/build/outputs/apk/debug/*armeabi-v7a*.apk
+        if-no-files-found: warn
+
+    - name: Upload arm64-v8a TV APK
+      uses: actions/upload-artifact@v7
+      if: ${{ success() }}
+      with:
+        name: tv-arm64-v8a
+        path: V2rayNG/tv/build/outputs/apk/debug/*arm64-v8a*.apk
+        if-no-files-found: warn
+
+    - name: Upload universal TV APK
+      uses: actions/upload-artifact@v7
+      if: ${{ success() }}
+      with:
+        name: tv-universal
+        path: V2rayNG/tv/build/outputs/apk/debug/*universal*.apk
+        if-no-files-found: error
